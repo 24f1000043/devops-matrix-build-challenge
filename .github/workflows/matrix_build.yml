@@ -1,0 +1,38 @@
+name: Matrix Build with Artifacts
+
+on:
+  push:
+    branches: [ main ]  # Triggers on push to main (you can change to 'workflow_dispatch' for manual trigger)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Base runner; matrix will vary Node version
+    strategy:
+      matrix:
+        node-version: [14, 16, 18]  # At least 3 variants; runs in parallel
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: matrix-a9d9135  # Required step identifier
+        run: |
+          echo "Matrix build step for Node ${{ matrix.node-version }}"
+          node --version  # Verify Node setup
+
+      - name: Generate build artifact
+        run: |
+          echo "Build output for Node ${{ matrix.node-version }}: This is a sample artifact generated on $$ (date)." > build-output- $${{ matrix.node-version }}.txt
+          # Ensure non-empty: Add some dynamic content
+          echo "Matrix variant: $$ {{ matrix.node-version }}" >> build-output- $${{ matrix.node-version }}.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-a9d9135-node${{ matrix.node-version }}  # Required prefix + variant
+          path: build-output-${{ matrix.node-version }}.txt
+          retention-days: 1  # Optional: Keeps artifacts for 1 day
