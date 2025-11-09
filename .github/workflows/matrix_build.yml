@@ -2,37 +2,46 @@ name: Matrix Build with Artifacts
 
 on:
   push:
-    branches: [ main ]  # Triggers on push to main (you can change to 'workflow_dispatch' for manual trigger)
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Base runner; matrix will vary Node version
+    name: build (node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        node-version: [14, 16, 18]  # At least 3 variants; runs in parallel
+        node-version: [14, 16, 18]
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Set up Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: matrix-a9d9135  # Required step identifier
+      - name: matrix-a9d9135
+        # This is the required identifier step. Keep it exactly like this.
         run: |
-          echo "Matrix build step for Node ${{ matrix.node-version }}"
-          node --version  # Verify Node setup
+          echo "Running matrix job for Node.js ${{ matrix.node-version }}"
+          echo "matrix variant: ${{ matrix.node-version }}"
 
       - name: Generate build artifact
+        # produce a unique, non-empty artifact file per matrix variant
         run: |
-          echo "Build output for Node ${{ matrix.node-version }}: This is a sample artifact generated on $$ (date)." > build-output- $${{ matrix.node-version }}.txt
-          # Ensure non-empty: Add some dynamic content
-          echo "Matrix variant: $$ {{ matrix.node-version }}" >> build-output- $${{ matrix.node-version }}.txt
+          mkdir -p build-output
+          ARTFILE="build-output/build-output-${{ matrix.node-version }}.txt"
+          echo "Build output for Node.js ${{ matrix.node-version }}" > "$ARTFILE"
+          echo "Generated artifact path: $ARTFILE"
+          echo "Contents:"
+          cat "$ARTFILE"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-a9d9135-node${{ matrix.node-version }}  # Required prefix + variant
-          path: build-output-${{ matrix.node-version }}.txt
-          retention-days: 1  # Optional: Keeps artifacts for 1 day
+          # artifact name must start with the required prefix
+          name: build-a9d9135-v${{ matrix.node-version }}
+          path: build-output/build-output-${{ matrix.node-version }}.txt
